@@ -10,13 +10,7 @@ package javaeetutorial.customer.data;
 import java.io.Serializable;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.NamedQuery;
-import javax.persistence.OneToOne;
-import javax.persistence.Table;
+import javax.persistence.*;
 import javax.xml.bind.annotation.*;
 
 /**
@@ -30,6 +24,12 @@ import javax.xml.bind.annotation.*;
     query="SELECT c FROM Customer c " +
           "ORDER BY c.id"
 )
+
+@NamedQuery(
+        name="findCustomerById",
+        query="SELECT c FROM Customer c where c.id = ?1"
+)
+
 @XmlRootElement(name="customer")
 @XmlAccessorType(XmlAccessType.FIELD)
 public class Customer implements Serializable {
@@ -48,7 +48,7 @@ public class Customer implements Serializable {
     protected String lastname;
     
     @XmlElement(required=true)
-    @OneToOne
+    @OneToOne(cascade=CascadeType.MERGE)
     protected Address address;
     
     @XmlElement(required=true)
@@ -66,7 +66,7 @@ public class Customer implements Serializable {
     }
 
     public void setId(int id) {
-        logger.log(Level.INFO, "setId called and set to {0}", id);
+        logger.log(Level.FINEST, "setId called and set to {0}", id);
         this.id = id;
     }
 
@@ -75,7 +75,7 @@ public class Customer implements Serializable {
     }
 
     public void setFirstname(String firstname) {
-        logger.log(Level.INFO, "setFirstname called and set to {0}", firstname);
+        logger.log(Level.FINEST, "setFirstname called and set to {0}", firstname);
         this.firstname = firstname;
     }
 
@@ -84,7 +84,7 @@ public class Customer implements Serializable {
     }
 
     public void setLastname(String lastName) {
-        logger.log(Level.INFO, "setLastname called and set to {0}", lastName);
+        logger.log(Level.FINEST, "setLastname called and set to {0}", lastName);
         this.lastname = lastName;
     }
 
@@ -93,7 +93,7 @@ public class Customer implements Serializable {
     }
 
     public void setAddress(Address address) {
-        logger.log(Level.INFO, "setAddress called");
+        logger.log(Level.FINEST, "setAddress called");
         this.address = address;
     }
 
@@ -102,7 +102,7 @@ public class Customer implements Serializable {
     }
 
     public void setEmail(String email) {
-        logger.log(Level.INFO, "setEmail called and set to {0}", email);
+        logger.log(Level.FINEST, "setEmail called and set to {0}", email);
         this.email = email;
     }
 
@@ -111,7 +111,7 @@ public class Customer implements Serializable {
     }
 
     public void setPhone(String phone) {
-        logger.log(Level.INFO, "setPhone called and set to {0}", phone);
+        logger.log(Level.FINEST, "setPhone called and set to {0}", phone);
         this.phone = phone;
     }
 }

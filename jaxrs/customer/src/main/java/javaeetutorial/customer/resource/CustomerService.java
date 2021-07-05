@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (c) 2014 Oracle and/or its affiliates. All rights reserved.
  *
  * You may not modify, use, reproduce, or distribute this software except in
@@ -13,8 +13,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import javaeetutorial.customer.clients.Configs;
 import javaeetutorial.customer.data.Address;
 import javaeetutorial.customer.data.Customer;
+import org.apache.http.HttpStatus;
+
 import javax.annotation.PostConstruct;
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
@@ -43,7 +47,7 @@ public class CustomerService {
     private void init() {
         cb = em.getCriteriaBuilder();
     }
-    
+
     @GET
     @Path("all")
     @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
@@ -61,6 +65,7 @@ public class CustomerService {
         }
         return customers;
     }
+
     /**
      * Get customer XML
      *
@@ -69,12 +74,22 @@ public class CustomerService {
      */
     @GET
     @Path("{id}")
-    @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
     public Customer getCustomer(@PathParam("id") String customerId) {
         Customer customer = null;
 
         try {
             customer = findById(customerId);
+
+            if (customer != null) {
+                logger.log(Level.INFO,
+                        "findCustomer() found custumer for customerId {0}. {1}",
+                        new Object[]{customerId, customer});
+            } else {
+                logger.log(Level.INFO,
+                        "findCustomer() did not find custumer for customerId {0}",
+                        new Object[]{customerId});
+            }
         } catch (Exception ex) {
             logger.log(Level.SEVERE,
                     "Error calling findCustomer() for customerId {0}. {1}",
@@ -89,7 +104,7 @@ public class CustomerService {
      *
      * @param customer
      * @return Response URI for the Customer added
-     * @see Customer.java
+     * @see Customer
      */
     @POST
     @Consumes({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
@@ -112,13 +127,13 @@ public class CustomerService {
      *
      * @param customer
      * @return Response URI for the Customer added
-     * @see Customer.java
+     * @see Customer
      */
     @PUT
     @Path("{id}")
     @Consumes({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
     public Response updateCustomer(@PathParam("id") String customerId,
-            Customer customer) {
+                                   Customer customer) {
 
         try {
             Customer oldCustomer = findById(customerId);
@@ -128,7 +143,7 @@ public class CustomerService {
                 throw new WebApplicationException(Response.Status.NOT_FOUND);
             } else {
                 persist(customer);
-                return Response.ok().status(303).build(); //return a seeOther code
+                return Response.ok().status(Response.Status.OK).build(); //return a seeOther code
             }
         } catch (WebApplicationException e) {
             throw new WebApplicationException(e,
@@ -152,8 +167,10 @@ public class CustomerService {
             logger.log(Level.SEVERE,
                     "Error calling deleteCustomer() for customerId {0}. {1}",
                     new Object[]{customerId, ex.getMessage()});
+            throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
+
 
     /**
      * Simple persistence method
@@ -164,11 +181,12 @@ public class CustomerService {
     private long persist(Customer customer) {
         
         try {
-            Address address = customer.getAddress();
-            em.persist(address);
+            customer = em.merge(customer);
+            em.persist(customer.getAddress());
             em.persist(customer);
+            logger.log(Level.WARNING,"persisted customer {0}",new Object[]{customer});
         } catch (Exception ex) {
-            logger.warning("Something went wrong when persisting the customer");
+            logger.log(Level.WARNING,"Something went wrong when persisting the customer {0}",new Object[]{ex.getMessage()});
         }
 
         return customer.getId();
@@ -182,15 +200,15 @@ public class CustomerService {
      * @throws IOException
      */
     private Customer findById(String customerId) {
-        Customer customer = null;
         try {
-            customer = em.find(Customer.class, customerId);
-            return customer;
+            return (Customer) em.createNamedQuery("findCustomerById").setParameter(1,Integer.parseInt(customerId)).getSingleResult();
+            //return em.find(Customer.class, customerId);
         } catch (Exception ex) {
+            ex.printStackTrace();
             logger.log(Level.WARNING, 
-                    "Couldn't fine customer with ID of {0}", customerId);
+                    "Couldn't find customer with ID of {0}", customerId);
         }
-        return customer;
+        return null;
     }
     
     private List<Customer> findAllCustomers() {
@@ -213,12 +231,14 @@ public class CustomerService {
     private boolean remove(String customerId) {
         Customer customer;
         try {
-            customer = em.find(Customer.class, customerId);
+            customer = (Customer) em.createNamedQuery("findCustomerById").setParameter(1,Integer.parseInt(customerId)).getSingleResult();
             Address address = customer.getAddress();
             em.remove(address);
             em.remove(customer);
+            logger.log(Level.INFO, "removed customer with ID {0}", customerId);
             return true;
         } catch (Exception ex) {
+            ex.printStackTrace();
             logger.log(Level.WARNING, "Couldn't remove customer with ID {0}", customerId);
             return false;
         }
