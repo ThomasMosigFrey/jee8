@@ -12,14 +12,7 @@
     </parent>
     
     <modules>
-        <module>async</module>
         <module>cart</module>
-        <module>converter</module>
-        <module>counter</module>
-        <module>helloservice</module>
-        <module>interceptor</module>
-        <module>standalone</module>
-        <module>timersession</module>
     </modules>
     
     <build>

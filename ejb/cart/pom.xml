@@ -15,6 +15,5 @@
         <module>cart-common</module>
         <module>cart-ejb</module>
         <module>cart-appclient</module>
-        <module>cart-ear</module>
     </modules>
 </project>
