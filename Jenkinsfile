@@ -1,6 +1,5 @@
 pipeline {
     agent { label 'Demo' }
-
     stages {
         stage('Compile/Test') {
             steps {
